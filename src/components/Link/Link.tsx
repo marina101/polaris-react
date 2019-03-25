@@ -1,10 +1,11 @@
 import * as React from 'react';
 
 import {classNames} from '@shopify/react-utilities';
-import {ExternalMinor} from '@shopify/polaris-icons';
+import {ExternalSmallMinor} from '@shopify/polaris-icons';
 
+import {withAppProvider, WithAppProviderProps} from '../AppProvider';
 import UnstyledLink from '../UnstyledLink';
-import Icon, {IconSource} from '../Icon';
+import Icon from '../Icon';
 
 import styles from './Link.scss';
 
@@ -13,10 +14,6 @@ export interface BaseProps {
   id?: string;
   /** The url to link to */
   url?: string;
-  // /** An icon that represents the link content */
-  // icon?: IconSource;
-  /** An icon that hints what type of interaction to expect */
-  trailingIcon?: IconSource;
   /** The content to display inside link */
   children?: React.ReactNode;
   /** Use for a links that open a different site */
@@ -28,36 +25,36 @@ export interface BaseProps {
 }
 
 export interface Props extends BaseProps {}
+export type CombinedProps = Props & WithAppProviderProps;
 
-export default function Link({
+function Link({
   url,
-  trailingIcon,
   children,
   onClick,
   external,
   id,
   monochrome,
-}: Props) {
+  polaris,
+}: CombinedProps) {
   const className = classNames(styles.Link, monochrome && styles.monochrome);
-  let childrenMarkup;
+  let childrenMarkup = children;
 
-  if ((external || trailingIcon) && typeof children === 'string') {
-    const lastWord = children.slice(children.lastIndexOf(' '));
-    const rest = children.slice(0, children.lastIndexOf(' '));
-    const iconSource = external ? ExternalMinor : trailingIcon;
-    const iconLabel = external ? '(opens a new window)' : undefined;
+  if (external && typeof children === 'string') {
+    const lastWord = children.slice(children.lastIndexOf(' ') + 1);
+    const rest = children.slice(0, children.lastIndexOf(' ') + 1);
+    const iconLabel = polaris.intl.translate(
+      'Polaris.Common.newWindowAccessibilityHint',
+    );
 
     childrenMarkup = (
       <React.Fragment>
-        {rest}{' '}
+        {rest}
         <span className={styles.IconLockup}>
           {lastWord}
-          <Icon accessibilityLabel={iconLabel} source={iconSource} />
+          <Icon accessibilityLabel={iconLabel} source={ExternalSmallMinor} />
         </span>
       </React.Fragment>
     );
-  } else {
-    childrenMarkup = children;
   }
 
   return url ? (
@@ -67,6 +64,7 @@ export default function Link({
       url={url}
       external={external}
       id={id}
+      polaris={polaris}
     >
       {childrenMarkup}
     </UnstyledLink>
@@ -76,3 +74,5 @@ export default function Link({
     </button>
   );
 }
+
+export default withAppProvider<Props>()(Link);
