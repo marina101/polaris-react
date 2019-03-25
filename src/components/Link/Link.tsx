@@ -1,8 +1,10 @@
 import * as React from 'react';
 
 import {classNames} from '@shopify/react-utilities';
+import {ExternalMinor} from '@shopify/polaris-icons';
 
 import UnstyledLink from '../UnstyledLink';
+import Icon, {IconSource} from '../Icon';
 
 import styles from './Link.scss';
 
@@ -11,6 +13,10 @@ export interface BaseProps {
   id?: string;
   /** The url to link to */
   url?: string;
+  // /** An icon that represents the link content */
+  // icon?: IconSource;
+  /** An icon that hints what type of interaction to expect */
+  trailingIcon?: IconSource;
   /** The content to display inside link */
   children?: React.ReactNode;
   /** Use for a links that open a different site */
@@ -25,6 +31,7 @@ export interface Props extends BaseProps {}
 
 export default function Link({
   url,
+  trailingIcon,
   children,
   onClick,
   external,
@@ -32,6 +39,27 @@ export default function Link({
   monochrome,
 }: Props) {
   const className = classNames(styles.Link, monochrome && styles.monochrome);
+  let childrenMarkup;
+
+  if ((external || trailingIcon) && typeof children === 'string') {
+    const lastWord = children.slice(children.lastIndexOf(' '));
+    const rest = children.slice(0, children.lastIndexOf(' '));
+    const iconSource = external ? ExternalMinor : trailingIcon;
+    const iconLabel = external ? '(opens a new window)' : undefined;
+
+    childrenMarkup = (
+      <React.Fragment>
+        {rest}{' '}
+        <span className={styles.IconLockup}>
+          {lastWord}
+          <Icon accessibilityLabel={iconLabel} source={iconSource} />
+        </span>
+      </React.Fragment>
+    );
+  } else {
+    childrenMarkup = children;
+  }
+
   return url ? (
     <UnstyledLink
       onClick={onClick}
@@ -40,11 +68,11 @@ export default function Link({
       external={external}
       id={id}
     >
-      {children}
+      {childrenMarkup}
     </UnstyledLink>
   ) : (
     <button type="button" onClick={onClick} className={className} id={id}>
-      {children}
+      {childrenMarkup}
     </button>
   );
 }

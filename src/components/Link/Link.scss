@@ -18,6 +18,13 @@
   }
 }
 
+.IconLockup {
+  display: inline-flex;
+  align-items: center;
+
+  @include recolor-icon(currentColor);
+}
+
 .monochrome {
   color: inherit;
   @include underlined-link;
