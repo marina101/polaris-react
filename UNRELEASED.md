@@ -10,6 +10,8 @@ Use [the changelog guidelines](https://git.io/polaris-changelog-guidelines) to f
 
 ### New components
 
+- Added the `Sheet` component ([#1250](https://github.com/Shopify/polaris-react/pull/1250))
+
 ### Enhancements
 
 - Added a public `focus` method on `Banner` ([#1219](https://github.com/Shopify/polaris-react/pull/1219))

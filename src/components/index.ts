@@ -232,6 +232,12 @@ export {
   Props as SettingToggleProps,
 } from './SettingToggle';
 
+export {
+  default as Sheet,
+  Props as SheetProps,
+  isMobile as sheetIsMobile,
+} from './Sheet';
+
 export {default as Spinner, Props as SpinnerProps} from './Spinner';
 
 export {default as Stack, Props as StackProps} from './Stack';
