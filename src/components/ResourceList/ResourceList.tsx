@@ -35,6 +35,7 @@ export type Items = any[];
 export interface State {
   selectMode: boolean;
   loadingPosition: number;
+  lastSelected: number | null;
 }
 
 export interface Props {
@@ -68,6 +69,17 @@ export interface Props {
   onSortChange?(selected: string, id: string): void;
   /** Callback when selection is changed */
   onSelectionChange?(selectedItems: SelectedItems): void;
+  onSelectionChange?(
+    selected: boolean,
+    id: string,
+    index: number,
+    shiftKey: boolean,
+  ): void;
+  handleMultiSelectionChange?(
+    lastSelected: number,
+    currentlySelected: number,
+    items: Items,
+  ): number[] | string[];
   /** Function to render each list item	 */
   renderItem(item: any, id: string): React.ReactNode;
   /** Function to customize the unique ID for each item */
@@ -115,6 +127,7 @@ export class ResourceList extends React.Component<CombinedProps, State> {
     this.state = {
       selectMode: Boolean(selectedItems && selectedItems.length > 0),
       loadingPosition: 0,
+      lastSelected: null,
     };
   }
 
@@ -532,6 +545,7 @@ export class ResourceList extends React.Component<CombinedProps, State> {
     const resourceListClassName = classNames(
       styles.ResourceList,
       loading && styles.disabledPointerEvents,
+      selectMode && styles.disableTextSelection,
     );
 
     const listMarkup = this.itemsExist() ? (
@@ -621,27 +635,53 @@ export class ResourceList extends React.Component<CombinedProps, State> {
     );
   };
 
-  private handleSelectionChange = (selected: boolean, id: string) => {
+  private handleSelectionChange = (
+    selected: boolean,
+    id: string,
+    sortOrder: number | undefined,
+    shiftKey: boolean,
+  ) => {
     const {
       onSelectionChange,
       selectedItems,
       items,
       idForItem = defaultIdForItem,
+      handleMultiSelectionChange,
     } = this.props;
+    const {lastSelected} = this.state;
 
     if (selectedItems == null || onSelectionChange == null) {
       return;
     }
 
-    const newlySelectedItems =
+    let newlySelectedItems =
       selectedItems === SELECT_ALL_ITEMS
         ? getAllItemsOnPage(items, idForItem)
         : [...selectedItems];
 
-    if (selected) {
-      newlySelectedItems.push(id);
-    } else {
-      newlySelectedItems.splice(newlySelectedItems.indexOf(id), 1);
+    if (sortOrder !== undefined) {
+      this.setState({lastSelected: sortOrder});
+    }
+
+    let selectedIds: number[] | string[] = [id];
+
+    if (
+      shiftKey &&
+      lastSelected != null &&
+      sortOrder !== undefined &&
+      handleMultiSelectionChange
+    ) {
+      selectedIds = handleMultiSelectionChange(lastSelected, sortOrder, items);
+    }
+    newlySelectedItems = [...new Set([...newlySelectedItems, ...selectedIds])];
+
+    if (!selected) {
+      for (let i = 0; i < selectedIds.length; i++) {
+        newlySelectedItems.splice(
+          newlySelectedItems.indexOf(selectedIds[i]),
+          1,
+        );
+      }
     }
 
     if (newlySelectedItems.length === 0 && !isSmallScreen()) {
