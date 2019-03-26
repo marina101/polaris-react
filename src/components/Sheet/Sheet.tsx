@@ -1,114 +1,77 @@
 import * as React from 'react';
 
-import {CSSTransition} from 'react-transition-group';
-import debounce from 'lodash/debounce';
-import {classNames} from '@shopify/react-utilities/styles';
+import {SheetProps, frameContextTypes, FrameContext} from '../Frame';
+import {withAppProvider, WithAppProviderProps} from '../AppProvider';
 
-import {navigationBarCollapsed} from '../../utilities/breakpoints';
-import {Key} from '../../types';
-import {layer, overlay, Duration} from '../shared';
+interface Props extends SheetProps {}
 
-import TrapFocus from '../TrapFocus';
-import Portal from '../Portal';
-import KeypressListener from '../KeypressListener';
-import EventListener from '../EventListener';
+export type ComposedProps = Props & WithAppProviderProps;
 
-import styles from './Sheet.scss';
-
-export const BOTTOM_CLASS_NAMES = {
-  enter: classNames(styles.Bottom, styles.enterBottom),
-  enterActive: classNames(styles.Bottom, styles.enterBottomActive),
-  exit: classNames(styles.Bottom, styles.exitBottom),
-  exitActive: classNames(styles.Bottom, styles.exitBottomActive),
-};
-
-export const RIGHT_CLASS_NAMES = {
-  enter: classNames(styles.Right, styles.enterRight),
-  enterActive: classNames(styles.Right, styles.enterRightActive),
-  exit: classNames(styles.Right, styles.exitRight),
-  exitActive: classNames(styles.Right, styles.exitRightActive),
-};
-
-export interface Props {
-  open: boolean;
-  children: React.ReactNode;
-  onClose(): void;
-}
-
-export interface State {
-  mobile: boolean;
-}
-
-export default class Sheet extends React.PureComponent<Props, State> {
-  state: State = {
-    mobile: false,
-  };
-
-  private handleResize = debounce(
-    () => {
-      const {mobile} = this.state;
-      if (mobile !== isMobile()) {
-        this.setState({mobile: !mobile});
-      }
-    },
-    40,
-    {leading: true, trailing: true, maxWait: 40},
-  );
+export class Sheet extends React.PureComponent<ComposedProps, never> {
+  static contextTypes = frameContextTypes;
+  context: FrameContext;
 
   componentDidMount() {
-    const {mobile} = this.state;
-    if (mobile !== isMobile()) {
-      this.setState({mobile: !mobile});
+    const {
+      props,
+      context: {
+        frame: {showSheet},
+      },
+    } = this;
+    const {open, onClose, children} = props;
+
+    const sheetProps: Props = {
+      open,
+      onClose,
+      children,
+    };
+
+    open === true && showSheet(sheetProps);
+  }
+
+  componentDidUpdate({open: oldOpen}: Props) {
+    const {
+      props,
+      context: {
+        frame: {showSheet, hideSheet},
+      },
+    } = this;
+    const {open, onClose, children} = props;
+
+    const sheetProps: Props = {
+      open,
+      onClose,
+      children,
+    };
+
+    if (oldOpen === false && open === true) {
+      showSheet(sheetProps);
+    } else if (oldOpen === true && open === false) {
+      hideSheet(sheetProps);
     }
+  }
+
+  componentWillUnmount() {
+    const {
+      props,
+      context: {
+        frame: {hideSheet},
+      },
+    } = this;
+    const {open, onClose, children} = props;
+
+    const sheetProps: Props = {
+      open,
+      onClose,
+      children,
+    };
+
+    open === false && hideSheet(sheetProps);
   }
 
   render() {
-    const {children, open, onClose} = this.props;
-    const {mobile} = this.state;
-
-    const sheetClassName = classNames(styles.Sheet, !mobile && styles.desktop);
-
-    const containerClassName = classNames(
-      styles.Container,
-      !mobile && styles.desktop,
-    );
-
-    function Container() {
-      return (
-        <div className={containerClassName} {...layer.props} {...overlay.props}>
-          <TrapFocus trapping={open}>
-            <div role="dialog" tabIndex={-1} className={sheetClassName}>
-              {children}
-            </div>
-          </TrapFocus>
-        </div>
-      );
-    }
-
-    const sharedTransitionProps = {
-      timeout: Duration.Slow,
-      in: open,
-      mountOnEnter: true,
-      unmountOnExit: true,
-    };
-
-    const finalTransitionProps = {
-      classNames: mobile ? BOTTOM_CLASS_NAMES : RIGHT_CLASS_NAMES,
-      ...sharedTransitionProps,
-    };
-
-    return (
-      <Portal idPrefix="sheet">
-        <CSSTransition {...finalTransitionProps}>
-          <Container />
-        </CSSTransition>
-        <KeypressListener keyCode={Key.Escape} handler={onClose} />
-        <EventListener event="resize" handler={this.handleResize} />
-      </Portal>
-    );
+    return null;
   }
 }
 
-export function isMobile(): boolean {
-  return navigationBarCollapsed().matches;
-}
+export default withAppProvider<Props>()(Sheet);

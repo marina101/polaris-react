@@ -5,6 +5,7 @@ export {Props} from './Frame';
 export {
   DEFAULT_TOAST_DURATION,
   DEFAULT_TOAST_DURATION_WITH_ACTION,
+  sheetIsMobile,
 } from './components';
 
 export {
@@ -12,6 +13,7 @@ export {
   FrameContext,
   frameContextTypes,
   ToastProps,
+  SheetProps,
 } from './types';
 
 export default Frame;

@@ -1,70 +1,57 @@
 import * as React from 'react';
-
-import {CSSTransition} from 'react-transition-group';
-import {noop} from '@shopify/javascript-utilities/other';
-import {matchMedia} from '@shopify/jest-dom-mocks';
+import * as PropTypes from 'prop-types';
 import {mountWithAppProvider} from 'test-utilities';
-
-import Sheet, {isMobile, BOTTOM_CLASS_NAMES, RIGHT_CLASS_NAMES} from '../Sheet';
+import {noop} from '../../../utilities/other';
+import Sheet from '../Sheet';
 
 describe('<Sheet />', () => {
   beforeEach(() => {
-    matchMedia.mock();
+    jest.clearAllMocks();
   });
 
-  afterEach(() => {
-    matchMedia.restore();
-  });
-
-  const mockProps = {
-    open: true,
+  const openProps = {open: true, onClose: noop, children: <p>child content</p>};
+  const closedProps = {
+    open: false,
     onClose: noop,
+    children: <p>child content</p>,
   };
 
-  it('renders its children', () => {
-    const children = <div>Content</div>;
-
-    const sheet = mountWithAppProvider(
-      <Sheet {...mockProps}>{children}</Sheet>,
-    );
-
-    expect(sheet.find(children)).not.toBeNull();
+  it('opens the sheet when it is open on mount', () => {
+    const {frame} = mountWithContext(<Sheet {...openProps} />);
+    expect(frame.hideSheet).not.toHaveBeenCalled();
+    expect(frame.showSheet).toHaveBeenCalledWith(openProps);
   });
 
-  it('renders a css transition component with bottom class names at mobile sizes', () => {
-    matchMedia.setMedia(() => ({matches: true}));
+  it('closes the sheet when it is not open on unmount', () => {
+    const {sheet, frame} = mountWithContext(<Sheet {...closedProps} />);
 
-    const sheet = mountWithAppProvider(
-      <Sheet {...mockProps}>
-        <div>Content</div>
-      </Sheet>,
-    );
+    expect(frame.hideSheet).not.toHaveBeenCalled();
+    expect(frame.showSheet).not.toHaveBeenCalled();
 
-    expect(sheet.find(CSSTransition).props().classNames).toEqual(
-      BOTTOM_CLASS_NAMES,
-    );
+    sheet.unmount();
+
+    expect(frame.hideSheet).toHaveBeenCalledWith(closedProps);
   });
 
-  it('renders a css transition component with right class names at desktop sizes', () => {
-    const sheet = mountWithAppProvider(
-      <Sheet {...mockProps}>
-        <div>Content</div>
-      </Sheet>,
-    );
-
-    expect(sheet.find(CSSTransition).props().classNames).toEqual(
-      RIGHT_CLASS_NAMES,
-    );
+  it('opens a closed sheet when open updates to true', () => {
+    const {sheet, frame} = mountWithContext(<Sheet {...closedProps} />);
+    sheet.setProps(openProps);
+    expect(frame.showSheet).toHaveBeenCalledWith(openProps);
   });
 
-  describe('isMobile', () => {
-    it('returns false by default', () => {
-      expect(isMobile()).toBe(false);
-    });
-
-    it('returns true at mobile sizes', () => {
-      matchMedia.setMedia(() => ({matches: true}));
-      expect(isMobile()).toBe(true);
-    });
+  it('closes an open sheet when open updates to false', () => {
+    const {sheet, frame} = mountWithContext(<Sheet {...openProps} />);
+    sheet.setProps(closedProps);
+    expect(frame.hideSheet).toHaveBeenCalledWith(closedProps);
   });
 });
+
+function mountWithContext(element: React.ReactElement<any>) {
+  const frame = {showSheet: jest.fn(), hideSheet: jest.fn()};
+  const sheet = mountWithAppProvider(element, {
+    context: {frame},
+    childContextTypes: {frame: PropTypes.any},
+  });
+
+  return {sheet, frame};
+}

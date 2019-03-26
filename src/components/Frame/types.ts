@@ -4,6 +4,8 @@ import {Action} from '../../types';
 export interface FrameManager {
   showToast(toast: {id: string} & ToastProps): void;
   hideToast(toast: {id: string}): void;
+  showSheet(sheetProps: SheetProps): void;
+  hideSheet(sheetProps: SheetProps): void;
   setContextualSaveBar(props: ContextualSaveBarProps): void;
   removeContextualSaveBar(): void;
   startLoading(): void;
@@ -66,4 +68,10 @@ export interface ToastProps {
   onDismiss(): void;
   /** Adds an action next to the message (stand-alone app use only) */
   action?: Action;
+}
+
+export interface SheetProps {
+  open: boolean;
+  children: React.ReactNode;
+  onClose(): void;
 }
