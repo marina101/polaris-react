@@ -23,6 +23,7 @@ export interface Props {
   additionalAction?: ComplexAction;
   focused?: boolean;
   filters?: Filter[];
+  placeholder?: string;
   onSearchBlur?(): void;
   onSearchChange(searchValue: string, id: string): void;
   onFiltersChange?(appliedFilters: AppliedFilter[]): void;
@@ -40,6 +41,7 @@ export class FilterControl extends React.Component<CombinedProps> {
       additionalAction,
       focused = false,
       filters = [],
+      placeholder,
       onSearchBlur,
       onSearchChange,
       polaris: {intl},
@@ -52,6 +54,12 @@ export class FilterControl extends React.Component<CombinedProps> {
         resourceNamePlural: resourceName.plural.toLocaleLowerCase(),
       },
     );
+
+    const placeholderLabel = placeholder
+      ? intl.translate('Polaris.ResourceList.FilterControl.placeholderLabel', {
+          placeholder,
+        })
+      : textFieldLabel;
 
     if (additionalAction) {
       additionalAction.disabled = selectMode;
@@ -97,7 +105,7 @@ export class FilterControl extends React.Component<CombinedProps> {
           connectedRight={additionalActionButton}
           label={textFieldLabel}
           labelHidden
-          placeholder={textFieldLabel}
+          placeholder={placeholderLabel}
           prefix={<Icon source={SearchMinor} color="skyDark" />}
           value={searchValue}
           onChange={onSearchChange}
